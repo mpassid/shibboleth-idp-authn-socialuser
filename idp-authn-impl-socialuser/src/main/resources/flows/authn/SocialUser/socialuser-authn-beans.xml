@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The MIT License Copyright (c) 2015 CSC - IT Center for Science, http://www.csc.fi 
+	Permission is hereby granted, free of charge, to any person obtaining a copy 
+	of this software and associated documentation files (the "Software"), to 
+	deal in the Software without restriction, including without limitation the 
+	rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+	sell copies of the Software, and to permit persons to whom the Software is 
+	furnished to do so, subject to the following conditions: The above copyright 
+	notice and this permission notice shall be included in all copies or substantial 
+	portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY 
+	OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+	OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+	IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
+	DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
+	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+	DEALINGS IN THE SOFTWARE. -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:c="http://www.springframework.org/schema/c" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
+
+	default-init-method="initialize" default-destroy-method="destroy">
+
+	<bean
+		class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer"
+		p:placeholderPrefix="%{" p:placeholderSuffix="}" />
+
+	<bean class="net.shibboleth.idp.profile.impl.ProfileActionBeanPostProcessor" />
+	<bean class="net.shibboleth.ext.spring.config.IdentifiableBeanPostProcessor" />
+
+	<import resource="../../../conf/authn/socialuser-authn-config.xml" />
+
+	<bean id="SetRPUIInformation" class="net.shibboleth.idp.ui.impl.SetRPUIInformation"
+		scope="prototype" p:activationCondition-ref="shibboleth.authn.SocialUser.populateUIInfo"
+		p:httpServletRequest-ref="shibboleth.HttpServletRequest">
+		<property name="fallbackLanguages">
+			<bean parent="shibboleth.CommaDelimStringArray" c:_0="%{idp.ui.fallbackLanguages:}" />
+		</property>
+	</bean>
+
+	<bean id="ExtractLoginHintFromFormRequest"
+		class="fi.mpass.shibboleth.authn.impl.ExtractLoginHintFromFormRequest"
+		scope="prototype" p:httpServletRequest-ref="shibboleth.HttpServletRequest">
+		<!-- Usually there is only one login hint field. If loginHintCoder is present, 
+			there may be several fields. -->
+		<property name="loginHintFieldName">
+			<list>
+				<value>j_loginhint</value>
+			</list>
+		</property>
+
+		<!-- Enables coding loginHintField as json/base64 map and thus having several 
+			fields -->
+		<!-- <property name="LoginHintCoder" ref="LoginHintJsonBase64Coder"/> -->
+	</bean>
+
+	<bean id="LoginHintJsonBase64Coder" class="fi.mpass.shibboleth.authn.impl.LoginHintJsonBase64Coder"
+		scope="prototype">
+		<!-- rename mapping keys to json -->
+		<!-- <property name="loginHintRenameMapping"> <map> <entry key="j_loginhint" 
+			value="loginHint"/> </map> </property> -->
+	</bean>
+
+	<bean id="ExtractSocialPrincipalsFromSubject"
+		class="fi.mpass.shibboleth.authn.impl.ExtractSocialPrincipalsFromSubject"
+		scope="prototype" p:httpServletRequest-ref="shibboleth.HttpServletRequest" />
+
+	<bean id="ValidateExternalAuthentication"
+		class="net.shibboleth.idp.authn.impl.ValidateExternalAuthentication"
+		scope="prototype" p:classifiedMessages-ref="shibboleth.authn.SocialUser.ClassifiedMessageMap"
+		p:resultCachingPredicate="#{getObject('shibboleth.authn.RemoteUser.resultCachingPredicate')}" />
+
+	<!-- Example map, servlet location->bean -->
+	<bean id="SocialUserImplementationFactory" class="fi.mpass.shibboleth.authn.impl.SocialIdentityFactory"
+		scope="prototype">
+		<property name="socialImplBeans">
+			<map>
+				<entry key="/idp/Authn/SocialUser/Facebook" value-ref="FacebookIdentity" />
+				<entry key="/idp/Authn/SocialUser/Twitter" value-ref="TwitterIdentity" />
+				<entry key="/idp/Authn/SocialUser/Google" value-ref="GoogleIdentity" />
+				<entry key="/idp/Authn/SocialUser/LinkedIn" value-ref="LinkedInIdentity" />
+				<entry key="/idp/Authn/SocialUser/Yle" value-ref="OAuth2YleIdentity" />
+				<entry key="/idp/Authn/SocialUser/LiveID" value-ref="LiveIDIdentity" />
+			</map>
+		</property>
+	</bean>
+
+	<!-- example authentication beans -->
+
+	<bean id="FacebookIdentity" class="fi.mpass.shibboleth.authn.impl.FacebookIdentity"
+		scope="prototype">
+		<property name="appId" value="put_here" />
+		<property name="appSecret" value="put_here" />
+		<property name="authenticationRequest" ref="ShibAuthRequest" />
+	</bean>
+
+	<bean id="GoogleIdentity" class="fi.mpass.shibboleth.authn.impl.GoogleIdentity"
+		scope="prototype">
+		<property name="appId" value="put_here" />
+		<property name="appSecret" value="put_here" />
+		<property name="scope" value="profile" />
+	</bean>
+
+	<bean id="TwitterIdentity" class="fi.mpass.shibboleth.authn.impl.TwitterIdentity"
+		scope="prototype">
+		<property name="consumerKey" value="put_here" />
+		<property name="consumerSecret" value="put_here" />
+		<property name="authenticationRequest" ref="ShibAuthRequest" />
+	</bean>
+
+	<bean id="LinkedInIdentity" class="fi.mpass.shibboleth.authn.impl.LinkedInIdentity"
+		scope="prototype">
+		<property name="appId" value="put_here" />
+		<property name="appSecret" value="put_here" />
+		<property name="scope" value="r_basicprofile" />
+	</bean>
+
+	<bean id="OAuth2YleIdentity" class="fi.mpass.shibboleth.authn.impl.YleIdentity">
+		<property name="appId" value="put_here" />
+		<property name="appKey" value="put_here" />
+		<property name="clientId" value="put_here" />
+		<property name="clientSecret" value="put_here" />
+		<property name="authorizationEndpoint" value="put_here" />
+		<property name="tokenEndpoint" value="put_here" />
+		<property name="userinfoEndpoint" value="put_here" />
+		<property name="scope">
+			<list>
+				<value>sub</value>
+			</list>
+		</property>
+		<property name="claimsPrincipals">
+			<map>
+				<entry key="user_key" value="userId" />
+			</map>
+		</property>
+	</bean>
+
+	<bean id="ExampleOauth2Identity" class="fi.mpass.shibboleth.authn.impl.OAuth2Identity">
+		<property name="clientId" value="put_here" />
+		<property name="clientSecret" value="put_here" />
+		<property name="providerMetadataLocation" value="put_here" />
+		<!-- <property name="issuer" value="put_here" /> <property name="authorizationEndpoint" 
+			value="put_here" /> <property name="tokenEndpoint" value="put_here" /> <property 
+			name="userinfoEndpoint" value="put_here" /> -->
+		<property name="scope">
+			<list>
+				<value>profile</value>
+			</list>
+		</property>
+		<property name="claimsPrincipals">
+			<map>
+				<entry key="id" value="userId" />
+				<entry key="given_name" value="firstName" />
+				<entry key="family_name" value="lastName" />
+			</map>
+		</property>
+	</bean>
+
+	
+	<!-- Live ID example -->
+	<bean id="LiveIDIdentity" class="fi.mpass.shibboleth.authn.impl.OAuth2Identity">
+		<property name="clientId" value="" />
+		<property name="clientSecret" value="" />
+		<property name="authorizationEndpoint" value="https://login.live.com/oauth20_authorize.srf" />
+		<property name="tokenEndpoint" value="https://login.live.com/oauth20_token.srf" />
+		<property name="userinfoEndpoint" value="https://apis.live.net/v5.0/me" />
+		<property name="scope">
+			<list>
+				<value>wl.basic</value>
+			</list>
+		</property>
+		<property name="claimsPrincipals">
+			<map>
+				<entry key="id" value="userId" />
+				<entry key="first_name" value="firstName" />
+				<entry key="last_name" value="lastName" />
+			</map>
+		</property>
+	</bean>
+
+
+	<!-- This bean provides information of the shib authentication context -->
+	<bean id="ShibAuthRequest"
+		class="fi.mpass.shibboleth.authn.impl.ShibServletSocialAuthenticationRequestImpl">
+		<property name="passiveAttribute" value="isPassive" />
+		<property name="forcedAuthAttribute" value="forceAuthn" />
+		<property name="profileRequestContextAttribute" value="opensamlProfileRequestContext" />
+	</bean>
+
+	<bean
+		class="org.springframework.web.context.support.ServletContextAttributeExporter">
+		<property name="attributes">
+			<map>
+				<entry key="socialUserImplementationFactoryBeanInServletContext">
+					<ref bean="SocialUserImplementationFactory" />
+				</entry>
+			</map>
+		</property>
+	</bean>
+	
+</beans>
