@@ -152,6 +152,7 @@ THE SOFTWARE.
                     <finalName>shibboleth-idp-authn-socialuser-${project.version}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <outputDirectory>../target</outputDirectory>
+                    <tarLongFileMode>posix</tarLongFileMode>
                 </configuration>
                 <executions>
                     <execution>
