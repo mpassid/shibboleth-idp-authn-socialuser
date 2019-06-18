@@ -5,7 +5,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/mpassid/shibboleth-idp-authn-socialuser/badge.svg?branch=master)](https://coveralls.io/github/mpassid/shibboleth-idp-authn-socialuser?branch=master)
 
 ## Overview
-
+For most parts this module is not actively maintained. Do not use it to extend your shibboleth idp except for experimental purposes. 
 This module contains implementations of Facebook, Google, LinkedIn, Twitter, Yle, OAuth2 and OpenID Connect authentication modules for [Shibboleth Identity Provider v3](https://wiki.shibboleth.net/confluence/display/IDP30/Home).
 
 ## Authentication modules

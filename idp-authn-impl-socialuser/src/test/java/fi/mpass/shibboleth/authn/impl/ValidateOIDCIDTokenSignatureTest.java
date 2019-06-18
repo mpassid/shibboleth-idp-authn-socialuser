@@ -272,8 +272,8 @@ public class ValidateOIDCIDTokenSignatureTest extends AbstractOIDCIDTokenTest {
     }
 
     protected static RSAKey buildRsaKey(final KeyPair keyPair, final String kid) throws URISyntaxException {
-        return new RSAKey((RSAPublicKey) keyPair.getPublic(), KeyUse.SIGNATURE, null, new Algorithm("RS256"), kid,
-                new URI("https://mock"), new Base64URL(""), new ArrayList<Base64>());
+        return new RSAKey((RSAPublicKey) keyPair.getPublic(), KeyUse.SIGNATURE, null, new Algorithm("RS256"), kid, null,
+                null, null, null, null);
 
     }
 

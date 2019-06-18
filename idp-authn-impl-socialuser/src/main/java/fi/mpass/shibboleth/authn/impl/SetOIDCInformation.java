@@ -138,12 +138,25 @@ public class SetOIDCInformation extends AbstractAuthenticationAction {
     /** OIDC provider metadata. */
     private OIDCProviderMetadata oIDCProviderMetadata;
 
+    /** Legacy mode for constructing non compliant request object required by older step up service versions. */
+    private boolean legacyMode;
+
     /** Constructor. */
     public SetOIDCInformation() {
         log.trace("Entering");
         attributeContextLookupStrategy = Functions.compose(new ChildContextLookup<>(AttributeContext.class),
                 new ChildContextLookup<ProfileRequestContext, RelyingPartyContext>(RelyingPartyContext.class));
         log.trace("Leaving");
+    }
+
+    /**
+     * Set Legacy mode for constructing non compliant request object required by older step up service versions.
+     * 
+     * @param legacyModelLegacy mode for constructing non compliant request object required by older step up service
+     *            versions.
+     */
+    public void setLegacyMode(boolean legacyMode) {
+        this.legacyMode = legacyMode;
     }
 
     /**
@@ -388,7 +401,13 @@ public class SetOIDCInformation extends AbstractAuthenticationAction {
             if (attrValue != null) {
                 // 2. attribute value
                 log.debug("Setting claim " + claim + " to value " + attrValue);
-                idToken.put(claim, attrValue);
+                if (legacyMode) {
+                    idToken.put(claim, attrValue);
+                } else {
+                    JSONObject obj = new JSONObject();
+                    obj.put("value", attrValue);
+                    idToken.put(claim, obj);
+                }
                 continue;
             }
             if ("essential".equals(value)) {
